@@ -1,0 +1,8 @@
+Model,MAE (°C),MSE (°C²),RMSE (°C),R² Score,MAPE (%)
+Ridge Autoregression,1.464,4.384,2.094,0.9318,22.85
+Gradient Boosting,1.516,4.506,2.123,0.9298,21.39
+Random Forest,1.527,4.617,2.149,0.9281,22.39
+Naive Baseline (t-1),1.547,5.062,2.25,0.9212,24.07
+Weighted Ensemble,2.066,6.751,2.598,0.8949,33.65
+Moving Average (7-Day),2.007,8.036,2.835,0.8749,37.91
+Exponential Smoothing,7.652,80.535,8.974,-0.2538,126.51

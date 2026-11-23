@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Intelligence Platform | PM Accelerator</title>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet CSS for Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Custom Modern CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <i class="fa-solid fa-cloud-sun-rain brand-icon"></i>
+        <div>
+          <span class="brand-title">Weather Intelligence Platform</span>
+          <span class="brand-badge">PM Accelerator</span>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#current-section" class="nav-link active"><i class="fa-solid fa-bolt"></i> Current</a>
+        <a href="#search-section" class="nav-link"><i class="fa-solid fa-calendar-days"></i> Range Search</a>
+        <a href="#records-section" class="nav-link"><i class="fa-solid fa-database"></i> Saved Records</a>
+        <a href="#map-section" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Maps</a>
+        <a href="#videos-section" class="nav-link"><i class="fa-brands fa-youtube"></i> Travel Guides</a>
+        <a href="#export-section" class="nav-link"><i class="fa-solid fa-file-arrow-down"></i> Exports</a>
+        <a href="#about-section" class="nav-link"><i class="fa-solid fa-circle-info"></i> About</a>
+      </nav>
+      <div class="nav-meta">
+        <span class="developer-tag"><i class="fa-solid fa-user-check"></i> Aanchal Singh</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Hero / Status Banner -->
+    <section class="status-banner">
+      <div class="banner-content">
+        <div>
+          <h1>Global Weather Telemetry & Persistence Engine</h1>
+          <p>Dual Assessment Engineering Project &bull; FastAPI Backend &bull; PostgreSQL CRUD &bull; Open-Meteo & Nominatim</p>
+        </div>
+        <div class="quick-status" id="system-status-indicator">
+          <span class="status-dot"></span> PostgreSQL Online
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: Current Weather Search -->
+    <section id="current-section" class="card-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-location-crosshairs"></i> Current Weather Telemetry</h2>
+        <p>Real-time meteorological observations, air quality metrics, and rule-based advice</p>
+      </div>
+
+      <div class="search-box-wrapper">
+        <form id="current-weather-form" class="search-form">
+          <div class="input-group">
+            <i class="fa-solid fa-magnifying-glass input-icon"></i>
+            <input type="text" id="current-query-input" placeholder="Search city, ZIP, landmark, or GPS (e.g., Tokyo, 10001, 48.85, 2.35)..." required>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Check Weather</button>
+          <button type="button" id="btn-use-gps" class="btn btn-secondary"><i class="fa-solid fa-location-arrow"></i> My GPS</button>
+        </form>
+      </div>
+
+      <!-- Disambiguation list for multiple location matches -->
+      <div id="location-candidates" class="candidates-container hidden"></div>
+
+      <!-- Current Weather Display Grid -->
+      <div id="current-weather-display" class="current-grid hidden">
+        <div class="weather-hero-card">
+          <div class="location-header">
+            <div>
+              <h3 id="current-loc-name">New York</h3>
+              <p id="current-loc-country">United States</p>
+            </div>
+            <div id="current-weather-icon" class="weather-large-icon">☀️</div>
+          </div>
+          <div class="temp-block">
+            <span id="current-temp" class="temp-val">22.4</span>
+            <span class="temp-unit">&deg;C</span>
+          </div>
+          <p id="current-condition-text" class="condition-desc">Clear sky</p>
+          <div class="hero-meta">
+            <span>Feels like: <b id="current-apparent-temp">21.8&deg;C</b></span>
+            <span>Local Time: <b id="current-local-time">--:--</b></span>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <i class="fa-solid fa-droplet metric-icon"></i>
+            <span class="metric-label">Humidity</span>
+            <span id="metric-humidity" class="metric-val">65%</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-wind metric-icon"></i>
+            <span class="metric-label">Wind Speed</span>
+            <span id="metric-wind" class="metric-val">12.5 km/h</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-compass metric-icon"></i>
+            <span class="metric-label">Wind Direction</span>
+            <span id="metric-wind-dir" class="metric-val">180&deg;</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-cloud-rain metric-icon"></i>
+            <span class="metric-label">Precipitation</span>
+            <span id="metric-precipitation" class="metric-val">0.0 mm</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-gauge-high metric-icon"></i>
+            <span class="metric-label">Pressure</span>
+            <span id="metric-pressure" class="metric-val">1014 hPa</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-lungs metric-icon"></i>
+            <span class="metric-label">Air Quality (AQI)</span>
+            <span id="metric-aqi" class="metric-val">34 (Good)</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-sun metric-icon"></i>
+            <span class="metric-label">Sunrise</span>
+            <span id="metric-sunrise" class="metric-val">06:45</span>
+          </div>
+          <div class="metric-card">
+            <i class="fa-solid fa-moon metric-icon"></i>
+            <span class="metric-label">Sunset</span>
+            <span id="metric-sunset" class="metric-val">17:30</span>
+          </div>
+        </div>
+
+        <!-- Weather Recommendations Box -->
+        <div class="recommendations-card">
+          <h4><i class="fa-solid fa-lightbulb"></i> Weather Recommendations & Precautions</h4>
+          <div class="rec-item">
+            <span class="rec-label">Activity Recommendation:</span>
+            <span id="rec-activity" class="rec-text">Ideal for outdoor sightseeing and walking tours.</span>
+          </div>
+          <div class="rec-item">
+            <span class="rec-label">Clothing Advice:</span>
+            <span id="rec-clothing" class="rec-text">Light breathable layers with sunglasses.</span>
+          </div>
+          <div class="rec-item">
+            <span class="rec-label">Health & Safety Precautions:</span>
+            <span id="rec-precautions" class="rec-text">No environmental alerts. Normal conditions.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Date Range Search & Database Create -->
+    <section id="search-section" class="card-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-calendar-plus"></i> Historical & Forecast Date Range Search</h2>
+        <p>Query Open-Meteo Archive & Forecast APIs and persist records directly to PostgreSQL (CRUD: CREATE)</p>
+      </div>
+
+      <form id="range-search-form" class="range-form">
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="range-location"><i class="fa-solid fa-map-pin"></i> Target Location</label>
+            <input type="text" id="range-location" placeholder="City name, zip code, or landmark..." required>
+          </div>
+          <div class="form-group">
+            <label for="range-start-date"><i class="fa-regular fa-calendar"></i> Start Date</label>
+            <input type="date" id="range-start-date" required>
+          </div>
+          <div class="form-group">
+            <label for="range-end-date"><i class="fa-regular fa-calendar"></i> End Date</label>
+            <input type="date" id="range-end-date" required>
+          </div>
+          <div class="form-group btn-align">
+            <button type="submit" class="btn btn-success"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch & Save Record</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Created Record Notification & Preview -->
+      <div id="range-results-preview" class="preview-box hidden">
+        <div class="preview-header">
+          <h4 id="preview-title">Record Created Successfully in PostgreSQL</h4>
+          <span id="preview-record-id" class="badge">Record #1</span>
+        </div>
+        <div id="preview-summary" class="preview-summary-grid"></div>
+        <div class="table-responsive">
+          <table class="data-table" id="preview-daily-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Max Temp</th>
+                <th>Min Temp</th>
+                <th>Mean Temp</th>
+                <th>Precipitation</th>
+                <th>Wind Speed</th>
+                <th>Condition</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Saved Records Table (CRUD: READ, UPDATE, DELETE) -->
+    <section id="records-section" class="card-section">
+      <div class="section-header">
+        <div class="flex-between">
+          <div>
+            <h2><i class="fa-solid fa-database"></i> Saved Weather Records (CRUD Management)</h2>
+            <p>Stored PostgreSQL queries with pagination, search filter, in-place edit, and cascading deletion</p>
+          </div>
+          <div class="records-actions">
+            <button id="btn-refresh-records" class="btn btn-secondary btn-sm"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            <a href="/api/export/csv" class="btn btn-outline btn-sm"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+            <a href="/api/export/pdf" class="btn btn-outline btn-sm"><i class="fa-solid fa-file-pdf"></i> Export PDF</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="input-group">
+          <i class="fa-solid fa-filter input-icon"></i>
+          <input type="text" id="filter-records-input" placeholder="Filter by location, country, or query...">
+        </div>
+        <button id="btn-apply-filter" class="btn btn-secondary"><i class="fa-solid fa-magnifying-glass"></i> Filter</button>
+        <button id="btn-clear-filter" class="btn btn-outline">Clear</button>
+      </div>
+
+      <!-- Records Table -->
+      <div class="table-responsive">
+        <table class="data-table" id="saved-records-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Location</th>
+              <th>Coordinates</th>
+              <th>Date Range</th>
+              <th>Days</th>
+              <th>Created At</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="records-table-body">
+            <tr>
+              <td colspan="7" class="text-center py-4">Loading saved records from PostgreSQL...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-bar">
+        <span id="pagination-info">Showing records</span>
+        <div class="pagination-buttons">
+          <button id="btn-prev-page" class="btn btn-outline btn-sm" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+          <span id="current-page-badge" class="badge">Page 1</span>
+          <button id="btn-next-page" class="btn btn-outline btn-sm" disabled>Next <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Interactive Maps -->
+    <section id="map-section" class="card-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-map-location-dot"></i> Interactive Geospatial Map</h2>
+        <p>Leaflet.js + OpenStreetMap pinpointing geocoded coordinates</p>
+      </div>
+      <div id="map" class="map-container"></div>
+    </section>
+
+    <!-- SECTION 5: YouTube Travel Guides -->
+    <section id="videos-section" class="card-section">
+      <div class="section-header">
+        <h2><i class="fa-brands fa-youtube"></i> City Guides & Travel Experiences</h2>
+        <p>Curated destination tour videos and city highlights powered by YouTube integration</p>
+      </div>
+      <div id="videos-grid" class="videos-grid">
+        <p class="text-muted">Search for a location above to view relevant travel guides and city tours.</p>
+      </div>
+      <div id="youtube-fallback-box" class="fallback-box hidden">
+        <p><i class="fa-solid fa-info-circle"></i> <span id="youtube-fallback-msg"></span></p>
+        <a id="youtube-fallback-btn" href="#" target="_blank" class="btn btn-secondary btn-sm">Open Genuine YouTube Results <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Data Export Center -->
+    <section id="export-section" class="card-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-file-arrow-down"></i> Data Export Center</h2>
+        <p>Download structured database records in CSV, JSON, or executive PDF report format</p>
+      </div>
+      <div class="export-cards-grid">
+        <div class="export-card">
+          <div class="export-icon csv"><i class="fa-solid fa-file-csv"></i></div>
+          <h3>CSV Spreadsheet</h3>
+          <p>Tabular dataset containing location metadata, coordinates, and complete daily weather variables.</p>
+          <a href="/api/export/csv" class="btn btn-primary btn-block"><i class="fa-solid fa-download"></i> Download CSV</a>
+        </div>
+        <div class="export-card">
+          <div class="export-icon json"><i class="fa-solid fa-file-code"></i></div>
+          <h3>JSON Payload</h3>
+          <p>Full hierarchical structure including PM Accelerator project metadata, developer attribution, and daily telemetry.</p>
+          <a href="/api/export/json" class="btn btn-secondary btn-block"><i class="fa-solid fa-download"></i> Download JSON</a>
+        </div>
+        <div class="export-card">
+          <div class="export-icon pdf"><i class="fa-solid fa-file-pdf"></i></div>
+          <h3>Executive PDF Report</h3>
+          <p>Publication-ready document styled with ReportLab, featuring PM Accelerator branding, summary tables, and analysis.</p>
+          <a href="/api/export/pdf" class="btn btn-danger btn-block"><i class="fa-solid fa-download"></i> Download PDF</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: About PM Accelerator -->
+    <section id="about-section" class="card-section about-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-graduation-cap"></i> About Product Manager Accelerator</h2>
+        <p>Empowering product and engineering leaders worldwide</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-content">
+          <h3>The Premier Career Platform for Tech Leaders</h3>
+          <p>
+            The <strong>Product Manager Accelerator Program</strong> is designed to support product management 
+            professionals through every stage of their career — from students and aspiring PMs breaking into tech 
+            to experienced Directors taking on VP roles.
+          </p>
+          <p>
+            Our students consistently land top roles at premier technology companies including Google, Meta, 
+            Amazon, Uber, PayPal, and innovative growth-stage startups.
+          </p>
+          <div class="about-links">
+            <a href="https://www.pmaccelerator.io/" target="_blank" class="btn btn-primary"><i class="fa-solid fa-globe"></i> Official Website</a>
+            <a href="https://www.linkedin.com/company/product-manager-accelerator/" target="_blank" class="btn btn-secondary"><i class="fa-brands fa-linkedin"></i> LinkedIn Company Page</a>
+          </div>
+        </div>
+        <div class="about-pillars">
+          <div class="pillar-card">
+            <i class="fa-solid fa-book-open pillar-icon"></i>
+            <h4>Hands-on PM Curriculum</h4>
+            <p>Practical engineering frameworks, product discovery, metrics, and technical system design.</p>
+          </div>
+          <div class="pillar-card">
+            <i class="fa-solid fa-comments pillar-icon"></i>
+            <h4>Weekly Mentorship</h4>
+            <p>Direct weekly feedback from senior leaders and Silicon Valley hiring managers.</p>
+          </div>
+          <div class="pillar-card">
+            <i class="fa-solid fa-bullseye pillar-icon"></i>
+            <h4>Personalized Coaching</h4>
+            <p>1-on-1 career strategy, interview simulations, and targeted executive coaching.</p>
+          </div>
+        </div>
+      </div>
+      <div class="developer-credit-box">
+        <span>Project Developer: <strong>Aanchal Singh</strong> &bull; PM Accelerator Technical Assessments Submission</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- UPDATE RECORD MODAL -->
+  <div id="update-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-to-square"></i> Edit Weather Record</h3>
+        <button class="modal-close" id="btn-close-modal">&times;</button>
+      </div>
+      <form id="update-record-form">
+        <input type="hidden" id="edit-record-id">
+        <div class="form-group">
+          <label for="edit-location">Location</label>
+          <input type="text" id="edit-location" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="edit-start-date">Start Date</label>
+            <input type="date" id="edit-start-date" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="edit-end-date">End Date</label>
+            <input type="date" id="edit-end-date" required>
+          </div>
+        </div>
+        <p class="modal-hint"><i class="fa-solid fa-info-circle"></i> Updating parameters will re-query Open-Meteo and refresh the database record.</p>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btn-cancel-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save & Re-fetch Weather</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div id="delete-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> Confirm Deletion</h3>
+        <button class="modal-close" id="btn-close-delete-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to permanently delete record <strong id="delete-record-name"></strong>?</p>
+        <p class="text-muted text-sm">This action cannot be undone. All associated daily weather records in PostgreSQL will be cascaded and deleted.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" id="btn-cancel-delete">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete"><i class="fa-solid fa-trash-can"></i> Delete Permanently</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Application Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
